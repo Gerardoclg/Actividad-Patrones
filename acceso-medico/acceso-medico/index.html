@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control de Acceso Medico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #f0f2f5;
+  --superficie: #ffffff;
+  --borde:    #dde1e7;
+  --borde2:   #c8cdd6;
+  --texto:    #1a1f2e;
+  --dim:      #6b7280;
+  --dim2:     #9ca3af;
+  --acento:   #1d4ed8;
+  --acento2:  #3b82f6;
+  --ok:       #16a34a;
+  --err:      #dc2626;
+  --warn:     #d97706;
+  --panel:    #f8f9fb;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  font-family: 'DM Mono', monospace;
+  color: var(--texto);
+  min-height: 100vh;
+  font-size: 13px;
+}
+
+header {
+  background: var(--texto);
+  color: #fff;
+  padding: 0 32px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+}
+
+.logo {
+  font-family: 'Syne', sans-serif;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: .04em;
+}
+
+.logo em { color: #38bdf8; font-style: normal; }
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: 11px;
+  letter-spacing: .08em;
+  color: #94a3b8;
+}
+
+#barra-alerta {
+  position: fixed;
+  top: 60px; left: 0; right: 0;
+  height: 3px;
+  background: #22c55e;
+  transition: background .4s;
+  z-index: 190;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 340px 1fr 280px;
+  grid-template-rows: auto 1fr;
+  gap: 0;
+  min-height: calc(100vh - 63px);
+}
+
+.panel {
+  background: var(--superficie);
+  border-right: 1px solid var(--borde);
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.panel-titulo {
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--borde);
+}
+
+.panel-centro {
+  background: var(--panel);
+  border-right: 1px solid var(--borde);
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.panel-derecha {
+  background: var(--superficie);
+  padding: 20px;
+  overflow-y: auto;
+}
+
+/* Alerta */
+.alerta-controles {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.alerta-estado {
+  padding: 12px 14px;
+  border: 1px solid var(--borde);
+  background: var(--panel);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.alerta-label { font-size: 10px; letter-spacing: .15em; color: var(--dim); text-transform: uppercase; }
+#nivel-alerta-texto { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; }
+
+.btn-alerta {
+  padding: 8px 14px;
+  border: 1px solid var(--borde);
+  background: transparent;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: .1em;
+  cursor: pointer;
+  color: var(--dim);
+  transition: all .15s;
+  text-align: left;
+}
+
+.btn-alerta:hover { background: var(--bg); color: var(--texto); border-color: var(--borde2); }
+.btn-alerta.activo { background: var(--texto); color: #fff; border-color: var(--texto); }
+
+/* Formulario */
+.form-nuevo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.campo label { font-size: 10px; letter-spacing: .12em; color: var(--dim); text-transform: uppercase; }
+
+.campo input,
+.campo select {
+  padding: 8px 10px;
+  border: 1px solid var(--borde);
+  background: var(--panel);
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--texto);
+  outline: none;
+  transition: border-color .15s;
+}
+
+.campo input:focus,
+.campo select:focus { border-color: var(--acento2); }
+
+.btn-submit {
+  margin-top: 4px;
+  padding: 9px;
+  background: var(--acento);
+  color: #fff;
+  border: none;
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background .15s;
+}
+
+.btn-submit:hover { background: var(--acento2); }
+
+/* Tarjetas de personal */
+#lista-personal { display: flex; flex-direction: column; gap: 10px; }
+
+.tarjeta-personal {
+  border: 1px solid var(--borde);
+  background: var(--superficie);
+  padding: 14px;
+  transition: border-color .15s;
+}
+
+.tarjeta-personal:hover { border-color: var(--borde2); }
+
+.personal-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+
+.personal-avatar {
+  width: 36px; height: 36px;
+  border: 2px solid;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Syne', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.personal-nombre { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+
+.personal-meta { display: flex; flex-wrap: wrap; gap: 4px; }
+
+.rol-badge, .nivel-badge, .turno-badge, .id-badge {
+  font-size: 9px;
+  letter-spacing: .1em;
+  padding: 2px 6px;
+  border: 1px solid var(--borde);
+  text-transform: uppercase;
+}
+
+.rol-badge { border-width: 1px; }
+.nivel-badge { color: var(--dim); }
+.turno-badge { color: var(--dim); }
+.id-badge { color: var(--dim2); }
+
+.permisos-wrap { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+
+.tag-permiso {
+  font-size: 9px;
+  padding: 2px 7px;
+  background: var(--panel);
+  border: 1px solid var(--borde);
+  color: var(--dim);
+  letter-spacing: .06em;
+}
+
+.tag-deco {
+  font-size: 9px;
+  padding: 2px 7px;
+  background: #fef3c7;
+  border: 1px solid #fbbf24;
+  color: #92400e;
+  letter-spacing: .06em;
+}
+
+.personal-acciones { display: flex; gap: 4px; flex-wrap: wrap; }
+
+.btn-accion {
+  padding: 5px 10px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .06em;
+  border: 1px solid var(--borde);
+  background: transparent;
+  color: var(--dim);
+  cursor: pointer;
+  transition: all .15s;
+}
+
+.btn-validar:hover  { border-color: var(--acento); color: var(--acento); background: #eff6ff; }
+.btn-decorar:hover  { border-color: #d97706; color: #92400e; background: #fef3c7; }
+.btn-elevar:hover   { border-color: #7c3aed; color: #4c1d95; background: #f5f3ff; }
+.btn-revocar:hover  { border-color: var(--err); color: var(--err); background: #fef2f2; }
+
+/* Tabla de registros */
+.tabla-wrap { overflow-x: auto; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+thead th {
+  text-align: left;
+  padding: 8px 10px;
+  font-family: 'Syne', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--dim);
+  border-bottom: 2px solid var(--borde);
+  background: var(--panel);
+}
+
+.fila-registro td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--borde);
+  font-family: 'DM Mono', monospace;
+}
+
+.fila-registro.ok   { background: #f0fdf4; }
+.fila-registro.denegado { background: #fff5f5; }
+
+.estado-acceso {
+  font-size: 9px;
+  letter-spacing: .1em;
+  padding: 2px 8px;
+  font-weight: 500;
+}
+
+.estado-acceso.ok       { color: var(--ok); background: #dcfce7; }
+.estado-acceso.denegado { color: var(--err); background: #fee2e2; }
+
+.alerta-mini {
+  font-size: 9px;
+  padding: 1px 6px;
+  letter-spacing: .08em;
+}
+
+.alerta-NORMAL     { color: var(--ok); }
+.alerta-PRECAUCION { color: #d97706; }
+.alerta-ALERTA     { color: #f97316; }
+.alerta-CRITICO    { color: var(--err); }
+
+.motivo-bloqueo {
+  font-size: 9px;
+  color: var(--err);
+  margin-top: 2px;
+  letter-spacing: .04em;
+  line-height: 1.4;
+}
+
+.sin-datos { padding: 20px; text-align: center; color: var(--dim2); font-size: 12px; }
+
+/* Momentos Memento */
+#lista-momentos { display: flex; flex-direction: column; gap: 6px; }
+
+.momento-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border: 1px solid var(--borde);
+  background: var(--panel);
+  gap: 8px;
+}
+
+.momento-info { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.momento-hora { font-size: 10px; color: var(--acento); }
+.momento-desc { font-size: 10px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.btn-restaurar {
+  padding: 4px 8px;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .08em;
+  border: 1px solid var(--borde2);
+  background: transparent;
+  color: var(--dim);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all .15s;
+  white-space: nowrap;
+}
+
+.btn-restaurar:hover { border-color: var(--acento); color: var(--acento); background: #eff6ff; }
+
+/* Toasts */
+#zona-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  padding: 10px 16px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  border-left: 3px solid var(--acento);
+  background: var(--texto);
+  color: #f1f5f9;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: all .25s;
+  max-width: 320px;
+}
+
+.toast.visible { opacity: 1; transform: translateY(0); }
+.toast.toast-ok     { border-color: var(--ok); }
+.toast.toast-error  { border-color: var(--err); }
+.toast.toast-alerta { border-color: var(--warn); }
+.toast.toast-info   { border-color: var(--acento2); }
+
+/* Divisor de secciones en paneles */
+.divisor {
+  border: none;
+  border-top: 1px solid var(--borde);
+  margin: 18px 0;
+}
+
+/* Panel de restricciones activas */
+.panel-restricciones {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--borde);
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color .3s;
+}
+
+.restriccion-titulo {
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.restriccion-fila {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 11px;
+}
+
+.rkey {
+  font-size: 9px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--dim2);
+}
+
+.rval { color: var(--dim); }
+
+.rtags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+
+.tag-bloqueada {
+  font-size: 9px;
+  padding: 2px 7px;
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  color: #991b1b;
+  letter-spacing: .06em;
+}
+
+.tag-libre {
+  font-size: 9px;
+  padding: 2px 7px;
+  background: #dcfce7;
+  border: 1px solid #86efac;
+  color: #166534;
+  letter-spacing: .06em;
+}
+
+.tag-rol-ok {
+  font-size: 9px;
+  padding: 2px 7px;
+  background: #eff6ff;
+  border: 1px solid #93c5fd;
+  color: #1e40af;
+  letter-spacing: .06em;
+}
+
+/* ── Modal de confirmación de registro ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s;
+}
+
+.modal-overlay.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.modal {
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  padding: 28px;
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transform: translateY(10px);
+  transition: transform .2s;
+}
+
+.modal-overlay.visible .modal {
+  transform: translateY(0);
+}
+
+.modal-titulo {
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--texto);
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--borde);
+}
+
+.modal-fila {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.modal-label {
+  font-size: 9px;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--dim2);
+}
+
+.modal-valor {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--texto);
+}
+
+.modal-acciones {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.btn-modal-confirmar {
+  flex: 1;
+  padding: 10px;
+  background: var(--acento);
+  color: #fff;
+  border: none;
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background .15s;
+}
+
+.btn-modal-confirmar:hover { background: var(--acento2); }
+
+.btn-modal-cancelar {
+  flex: 1;
+  padding: 10px;
+  background: transparent;
+  color: var(--dim);
+  border: 1px solid var(--borde);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: .08em;
+  cursor: pointer;
+  transition: all .15s;
+}
+
+.btn-modal-cancelar:hover {
+  border-color: var(--err);
+  color: var(--err);
+}
+
+/* ── Modal de selección de zona ── */
+.modal-zonas-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.btn-zona {
+  padding: 8px 10px;
+  border: 1px solid var(--borde);
+  background: var(--panel);
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .06em;
+  color: var(--dim);
+  cursor: pointer;
+  transition: all .15s;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.btn-zona:hover {
+  border-color: var(--acento);
+  color: var(--acento);
+  background: #eff6ff;
+}
+
+.btn-zona.seleccionada {
+  border-color: var(--acento);
+  background: var(--acento);
+  color: #fff;
+}
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">ACCESO<em>MED</em> — Sistema de Control</div>
+  <div class="header-right">
+    <span>Nivel de alerta: <strong id="nivel-alerta-texto">NORMAL</strong></span>
+    <span id="reloj">--:--:--</span>
+  </div>
+</header>
+
+<div id="barra-alerta"></div>
+
+<div class="layout">
+
+  <!-- Panel izquierdo: Estado de alerta + Registro de personal -->
+  <aside class="panel">
+
+    <div class="panel-titulo">Estado de Alerta del Sistema</div>
+    <div class="alerta-estado">
+      <span class="alerta-label">Nivel actual</span>
+      <span id="nivel-alerta-texto">NORMAL</span>
+    </div>
+    <div class="alerta-controles">
+      <button class="btn-alerta activo" data-nivel="NORMAL">NORMAL — Operacion estandar</button>
+      <button class="btn-alerta" data-nivel="PRECAUCIÓN">PRECAUCIÓN — Monitoreo elevado</button>
+      <button class="btn-alerta" data-nivel="ALERTA">ALERTA — Restriccion de zonas</button>
+      <button class="btn-alerta" data-nivel="CRÍTICO">CRÍTICO — Acceso minimo</button>
+    </div>
+
+    <div id="panel-restricciones" class="panel-restricciones"></div>
+
+    <hr class="divisor">
+
+    <div class="panel-titulo">Registrar Nuevo Personal</div>
+    <form class="form-nuevo" id="form-nuevo-personal">
+      <div class="campo">
+        <label>Tipo de perfil</label>
+        <select name="tipo">
+          <option value="Medico">Medico</option>
+          <option value="Enfermero">Enfermero</option>
+          <option value="Administrador">Administrador</option>
+          <option value="Seguridad">Seguridad</option>
+        </select>
+      </div>
+      <div class="campo">
+        <label>ID del personal</label>
+        <input name="idPersonal" placeholder="Ej: M003" required>
+      </div>
+      <div class="campo">
+        <label>Nombre completo</label>
+        <input name="nombre" placeholder="Dr. Juan Gomez" required>
+      </div>
+      <div class="campo">
+        <label>Turno</label>
+        <select name="turno">
+          <option value="Mañana">Mañana</option>
+          <option value="Tarde">Tarde</option>
+          <option value="Noche">Noche</option>
+        </select>
+      </div>
+      <button type="submit" class="btn-submit">Registrar Personal</button>
+    </form>
+
+  </aside>
+
+  <!-- Panel central: Personal del sistema -->
+  <main class="panel-centro">
+    <div class="panel-titulo">Personal Registrado en el Sistema</div>
+    <div id="lista-personal"></div>
+  </main>
+
+  <!-- Panel derecho: Registros y Memento -->
+  <aside class="panel-derecha">
+
+    <div class="panel-titulo">Registro de Accesos</div>
+    <div class="tabla-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Hora</th>
+            <th>Personal</th>
+            <th>Rol</th>
+            <th>Zona</th>
+            <th>Estado</th>
+            <th>Alerta</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-registros"></tbody>
+      </table>
+    </div>
+
+    <hr class="divisor">
+
+    <!-- Patron de Comportamiento: Memento -->
+    <!-- Lista los puntos de restauracion guardados; permite revertir el sistema a un estado previo -->
+    <div class="panel-titulo">Puntos de Restauracion (Memento)</div>
+    <div id="lista-momentos"></div>
+
+  </aside>
+
+</div>
+
+<!--confirmación de registro -->
+<div class="modal-overlay" id="modal-registro">
+  <div class="modal">
+    <div class="modal-titulo">Confirmar registro</div>
+    <div class="modal-fila">
+      <span class="modal-label">Tipo de perfil</span>
+      <span class="modal-valor" id="modal-tipo"></span>
+    </div>
+    <div class="modal-fila">
+      <span class="modal-label">ID del personal</span>
+      <span class="modal-valor" id="modal-id"></span>
+    </div>
+    <div class="modal-fila">
+      <span class="modal-label">Nombre completo</span>
+      <span class="modal-valor" id="modal-nombre"></span>
+    </div>
+    <div class="modal-fila">
+      <span class="modal-label">Turno</span>
+      <span class="modal-valor" id="modal-turno"></span>
+    </div>
+    <div class="modal-acciones">
+      <button class="btn-modal-cancelar" id="btn-modal-cancelar">Cancelar</button>
+      <button class="btn-modal-confirmar" id="btn-modal-confirmar">Confirmar registro</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal-overlay" id="modal-zona">
+  <div class="modal">
+    <div class="modal-titulo">Seleccionar zona de acceso</div>
+    <div class="modal-fila">
+      <span class="modal-label">Personal</span>
+      <span class="modal-valor" id="modal-zona-personal"></span>
+    </div>
+    <div class="modal-zonas-grid" id="modal-zonas-grid"></div>
+    <div class="modal-acciones">
+      <button class="btn-modal-cancelar" id="btn-zona-cancelar">Cancelar</button>
+      <button class="btn-modal-confirmar" id="btn-zona-confirmar">Validar acceso</button>
+    </div>
+  </div>
+</div>
+
+<!--elevación de nivel -->
+<div class="modal-overlay" id="modal-elevar">
+  <div class="modal">
+    <div class="modal-titulo">Elevar nivel de acceso</div>
+    <div class="modal-fila">
+      <span class="modal-label">Personal</span>
+      <span class="modal-valor" id="modal-elevar-personal"></span>
+    </div>
+    <div class="modal-fila">
+      <span class="modal-label">Selecciona el motivo</span>
+    </div>
+    <div class="modal-zonas-grid" id="modal-elevar-grid"></div>
+    <div class="modal-acciones">
+      <button class="btn-modal-cancelar" id="btn-elevar-cancelar">Cancelar</button>
+      <button class="btn-modal-confirmar" id="btn-elevar-confirmar">Elevar nivel</button>
+    </div>
+  </div>
+</div>
+
+<!--permiso temporal -->
+<div class="modal-overlay" id="modal-temporal">
+  <div class="modal" style="max-width: 420px">
+    <div class="modal-titulo">Permiso temporal</div>
+    <div class="modal-fila">
+      <span class="modal-label">Personal</span>
+      <span class="modal-valor" id="modal-temporal-personal"></span>
+    </div>
+    <div class="modal-fila">
+      <span class="modal-label">Zona a otorgar</span>
+    </div>
+    <div class="modal-zonas-grid" id="modal-temporal-grid"></div>
+    <div class="modal-fila" style="margin-top: 4px">
+      <span class="modal-label">Duración</span>
+      <div class="modal-zonas-grid" id="modal-temporal-duracion"></div>
+    </div>
+    <div class="modal-acciones">
+      <button class="btn-modal-cancelar" id="btn-temporal-cancelar">Cancelar</button>
+      <button class="btn-modal-confirmar" id="btn-temporal-confirmar">Otorgar permiso</button>
+    </div>
+  </div>
+</div>
+
+<div id="zona-toast"></div>
+
+<script>
+  setInterval(() => {
+    document.getElementById('reloj').textContent = new Date().toTimeString().slice(0, 8);
+  }, 1000);
+</script>
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
