@@ -25,7 +25,7 @@ El sistema sigue principios de ingeniería de software para asegurar la extensib
 | **Decorator** | Permisos Temporales | Permite añadir funcionalidades o permisos extra a un objeto de personal existente (ej. elevar nivel o permiso temporal) sin alterar su clase base. |
 
 ### 📊 Diagrama de Clases (UML)
-[![Vista Previa del PDF](Diagrama.png)](Diagrama.pdf)
+[![Portada](Diagramas.png)]
 ### 📊 3. Diagrama de Procesos (Validación de Acceso)
 
 ```mermaid
